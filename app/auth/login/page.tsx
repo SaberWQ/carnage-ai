@@ -30,8 +30,14 @@ export default function LoginPage() {
         email,
         password,
       })
-      if (error) throw error
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password")
+        }
+        throw error
+      }
       router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {

@@ -33,6 +33,12 @@ export default function SignUpPage() {
       return
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -44,7 +50,12 @@ export default function SignUpPage() {
           },
         },
       })
-      if (error) throw error
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          throw new Error("An account with this email already exists")
+        }
+        throw error
+      }
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
