@@ -21,25 +21,37 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      console.log("Starting login process...")
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       })
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Invalid email or password")
-        }
-        throw error
+
+      const result = await response.json()
+      console.log("Login response:", result)
+
+      if (!response.ok) {
+        throw new Error(result.error || "Login failed")
       }
+
+      console.log("Login successful, redirecting...")
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("Caught error:", error)
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again."
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

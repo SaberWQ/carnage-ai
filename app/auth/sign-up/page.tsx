@@ -23,7 +23,6 @@ export default function SignUpPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -40,25 +39,34 @@ export default function SignUpPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
-          data: {
-            full_name: fullName,
-          },
+      console.log("Starting sign up process...")
+
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+        }),
       })
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          throw new Error("An account with this email already exists")
-        }
-        throw error
+
+      const result = await response.json()
+      console.log("Sign up response:", result)
+
+      if (!response.ok) {
+        throw new Error(result.error || "Sign up failed")
       }
-      router.push("/auth/sign-up-success")
+
+      console.log("Sign up successful, redirecting...")
+      router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("Caught error:", error)
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again."
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
